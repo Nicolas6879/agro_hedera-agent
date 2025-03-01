@@ -49,7 +49,7 @@ AgroHedera provides a solution by offering:
 
 1. **Clone the repository:**
    ```sh
-   git clone https://github.com/your-username/agrohedera.git
+   git clone https://github.com/Nicolas6879/agro_hedera-agent.git
    cd agrohedera
    ```
 2. **Install dependencies:**
