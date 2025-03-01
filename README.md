@@ -45,6 +45,22 @@ AgroHedera provides a solution by offering:
 - Basic functionality demonstrated
 - Open for community contributions and improvements
 
+### ▶️ How to Run the Project
+
+1. **Clone the repository:**
+   ```sh
+   git clone https://github.com/your-username/agrohedera.git
+   cd agrohedera
+   ```
+2. **Install dependencies:**
+   ```sh
+   npm install
+   ```
+3. **Start the project:**
+   ```sh
+   npm start
+   ```
+
 ### 🤝 Contribution
 
 Interested in supporting agricultural innovation? 
