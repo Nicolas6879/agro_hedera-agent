@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgroHedera - Asistente Agrícola</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f7f9f7;
+        }
+
+        .thinking {
+            opacity: 0.7;
+            font-style: italic;
+        }
+
+        .chat-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .messages {
+            height: 400px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+
+        .message {
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            border-radius: 15px;
+            max-width: 80%;
+            white-space: pre-wrap;
+        }
+
+        .user-message {
+            background-color: #e1f5fe;
+            margin-left: auto;
+        }
+
+        .bot-message {
+            background-color: #f1f1f1;
+        }
+
+        .blockchain-message {
+            background-color: #e8f5e9;
+            border-left: 4px solid #4caf50;
+        }
+
+        .help-message {
+            background-color: #fff8e1;
+            border-left: 4px solid #ffb300;
+            max-width: 100%;
+        }
+
+        .input-container {
+            display: flex;
+        }
+
+        #query-input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            margin-right: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        .wallet-container, .topic-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+
+        .records-container {
+            background-color: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+        }
+
+        .record {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+        }
+
+        h1, h2 {
+            color: #2e7d32;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        .form-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .markdown h1, .markdown h2, .markdown h3 {
+            margin-top: 1em;
+            margin-bottom: 0.5em;
+        }
+
+        .markdown ul, .markdown ol {
+            padding-left: 20px;
+        }
+
+        .markdown p {
+            margin-bottom: 1em;
+        }
+
+        .markdown code {
+            background-color: #f1f1f1;
+            padding: 2px 4px;
+            border-radius: 4px;
+        }
+
+        .topic-list {
+            margin-top: 15px;
+            border: 1px solid #e0e0e0;
+            border-radius: 5px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .topic-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .topic-item:hover {
+            background-color: #e9e9e9;
+        }
+
+        .topic-item .topic-id {
+            font-weight: bold;
+        }
+
+        .topic-item .topic-memo {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .topic-item .select-btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .steps-container {
+            display: flex;
+            margin-bottom: 20px;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            padding: 10px;
+            border-bottom: 3px solid #ccc;
+            color: #666;
+        }
+
+        .step.active {
+            border-color: #4CAF50;
+            color: #2e7d32;
+            font-weight: bold;
+        }
+
+        .step.completed {
+            border-color: #8bc34a;
+            color: #558b2f;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>AgroHedera - Asistente Agrícola</h1>
+
+    <div class="steps-container">
+        <div id="step-1" class="step active">1. Conectar Wallet</div>
+        <div id="step-2" class="step">2. Seleccionar Topic</div>
+        <div id="step-3" class="step">3. Asistente & Registros</div>
+    </div>
+
+    <div id="wallet-container" class="wallet-container">
+        <h2>Conectar a Hedera Wallet</h2>
+        <p>Para comenzar, necesitas proporcionar tus credenciales de Hedera Testnet:</p>
+        
+        <div class="form-group">
+            <label for="account-id">Account ID:</label>
+            <input type="text" id="account-id" placeholder="0.0.xxxxxx">
+        </div>
+
+        <div class="form-group">
+            <label for="private-key">Private Key:</label>
+            <input type="password" id="private-key" placeholder="Clave privada de Hedera">
+            <small style="display: block; margin-top: 5px; color: #666;">* Tu clave privada no se almacena en nuestros servidores, solo se utiliza para firmar transacciones localmente.</small>
+        </div>
+
+        <div class="form-buttons">
+            <button id="connect-wallet-btn" onclick="connectWallet()">Conectar Wallet</button>
+        </div>
+    </div>
+
+    <div id="topic-container" class="topic-container" style="display: none;">
+        <h2>Seleccionar o Crear Topic de Hedera</h2>
+        <div id="topic-status">
+            <p>Por favor, selecciona un Topic existente o crea uno nuevo:</p>
+            
+            <div id="topic-list-container" style="display: none;">
+                <h3>Tus Topics:</h3>
+                <div id="topic-list" class="topic-list">
+                    <p id="loading-topics">Cargando tus topics...</p>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-top: 20px;">
+                <label for="topic-id">O ingresa manualmente un Topic ID:</label>
+                <input type="text" id="topic-id" placeholder="0.0.xxxxxx">
+            </div>
+
+            <div class="form-buttons">
+                <button id="set-topic-btn" onclick="setExistingTopic()">Usar Topic existente</button>
+                <button id="create-topic-btn" onclick="showCreateTopicDialog()">Crear nuevo Topic</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal para crear nuevo topic -->
+    <div id="create-topic-modal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="background-color: white; margin: 15% auto; padding: 20px; border: 1px solid #888; border-radius: 10px; width: 80%; max-width: 500px;">
+            <h3 style="color: #2e7d32; margin-top: 0;">Crear nuevo Topic</h3>
+            <p>Ingresa un nombre descriptivo para tu nuevo topic:</p>
+            
+            <div class="form-group">
+                <label for="topic-memo">Descripción del Topic:</label>
+                <input type="text" id="topic-memo" placeholder="Ej: Registros de Café - Finca El Paraíso" style="width: 100%; padding: 8px; margin-bottom: 15px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button onclick="hideCreateTopicDialog()" style="background-color: #ccc; color: black;">Cancelar</button>
+                <button onclick="createNewTopicWithMemo()" style="background-color: #4CAF50;">Crear Topic</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="chat-container" class="chat-container" style="display: none;">
+        <h2>Consulta con el Asistente</h2>
+        <div class="messages" id="messages-container"></div>
+        <div class="input-container">
+            <input type="text" id="query-input" placeholder="Escribe tu consulta sobre agricultura aquí...">
+            <button id="send-query-btn" onclick="submitQuery()">Enviar</button>
+        </div>
+    </div>
+
+    <div id="records-container-outer" class="records-container" style="display: none;">
+        <h2>Registros en Hedera</h2>
+        <button id="load-records-btn" onclick="loadRecords()">Cargar Registros</button>
+        <div id="records-container"></div>
+    </div>
+
+    <script>
+        // Estado global
+        let currentTopicId = null;
+        let userAccountId = null;
+        let userPrivateKey = null;
+        let userTopics = [];
+
+        // Al cargar la página, verificar si ya hay un topic configurado
+        window.onload = async function () {
+            try {
+                const response = await fetch('/api/current-topic');
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.topicId) {
+                        currentTopicId = data.topicId;
+                        // No actualizamos la UI todavía, esperamos a que el usuario se conecte
+                    }
+                }
+            } catch (error) {
+                console.error('Error al verificar el topic:', error);
+            }
+        };
+
+        // Función para conectar la wallet
+        async function connectWallet() {
+            const accountId = document.getElementById('account-id').value.trim();
+            const privateKey = document.getElementById('private-key').value.trim();
+            
+            if (!accountId || !privateKey) {
+                alert('Por favor, ingresa tanto el Account ID como la Private Key');
+                return;
+            }
+            
+            // Deshabilitar el botón mientras se procesa
+            const connectBtn = document.getElementById('connect-wallet-btn');
+            connectBtn.disabled = true;
+            connectBtn.textContent = 'Conectando...';
+            
+            try {
+                const response = await fetch('/api/connect-wallet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ accountId, privateKey })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Guardar credenciales (solo en memoria, nunca las almacenamos)
+                    userAccountId = accountId;
+                    userPrivateKey = privateKey;
+                    
+                    // Actualizar UI para mostrar que estamos conectados
+                    document.getElementById('step-1').classList.remove('active');
+                    document.getElementById('step-1').classList.add('completed');
+                    document.getElementById('step-2').classList.add('active');
+                    
+                    // Ocultar contenedor de wallet y mostrar selector de topic
+                    document.getElementById('wallet-container').style.display = 'none';
+                    document.getElementById('topic-container').style.display = 'block';
+                    
+                    // Cargar los topics del usuario
+                    fetchUserTopics();
+                } else {
+                    alert(`Error al conectar: ${data.error}`);
+                    // Reactivar el botón
+                    connectBtn.disabled = false;
+                    connectBtn.textContent = 'Conectar Wallet';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Lo siento, ocurrió un error al intentar conectar. Por favor, verifica tus credenciales.');
+                // Reactivar el botón
+                connectBtn.disabled = false;
+                connectBtn.textContent = 'Conectar Wallet';
+            }
+        }
+        
+        // Función para obtener los topics del usuario
+        async function fetchUserTopics() {
+            try {
+                document.getElementById('topic-list-container').style.display = 'block';
+                document.getElementById('topic-list').innerHTML = '<p id="loading-topics">Cargando tus topics...</p>';
+                
+                const response = await fetch('/api/user-topics', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        accountId: userAccountId,
+                        privateKey: userPrivateKey 
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.topics && data.topics.length > 0) {
+                    userTopics = data.topics;
+                    
+                    // Actualizar la lista de topics en la UI
+                    const topicListElement = document.getElementById('topic-list');
+                    topicListElement.innerHTML = '';
+                    
+                    userTopics.forEach(topic => {
+                        const topicElement = document.createElement('div');
+                        topicElement.className = 'topic-item';
+                        topicElement.innerHTML = `
+                            <div>
+                                <div class="topic-id">${topic.topicId}</div>
+                                <div class="topic-memo">${topic.memo || 'Sin descripción'}</div>
+                            </div>
+                            <button class="select-btn" onclick="selectTopic('${topic.topicId}')">Seleccionar</button>
+                        `;
+                        topicListElement.appendChild(topicElement);
+                    });
+                } else {
+                    document.getElementById('topic-list').innerHTML = '<p>No se encontraron topics asociados a tu cuenta. Puedes crear uno nuevo o ingresar un Topic ID manualmente.</p>';
+                }
+            } catch (error) {
+                console.error('Error al obtener topics:', error);
+                document.getElementById('topic-list').innerHTML = '<p>Error al cargar los topics. Puedes crear uno nuevo o ingresar un Topic ID manualmente.</p>';
+            }
+        }
+        
+        // Función para seleccionar un topic específico
+        function selectTopic(topicId) {
+            document.getElementById('topic-id').value = topicId;
+            setExistingTopic();
+        }
+
+        // Función para usar un topic existente
+        async function setExistingTopic() {
+            const topicIdInput = document.getElementById('topic-id').value.trim();
+            if (!topicIdInput) {
+                alert('Por favor, selecciona un Topic o ingresa un Topic ID válido');
+                return;
+            }
+
+            // Deshabilitar botones mientras se procesa
+            document.getElementById('set-topic-btn').disabled = true;
+            document.getElementById('create-topic-btn').disabled = true;
+
+            try {
+                const response = await fetch('/api/set-topic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        topicId: topicIdInput,
+                        accountId: userAccountId,
+                        privateKey: userPrivateKey
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentTopicId = data.topicId;
+                    completeTopicSetup(`✅ Topic ID configurado: ${currentTopicId}. ¡Ahora puedes comenzar a registrar información!`);
+                } else {
+                    alert(`Error al configurar el Topic ID: ${data.error}`);
+                    // Reactivar botones
+                    document.getElementById('set-topic-btn').disabled = false;
+                    document.getElementById('create-topic-btn').disabled = false;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Lo siento, ocurrió un error al configurar el Topic ID.');
+                // Reactivar botones
+                document.getElementById('set-topic-btn').disabled = false;
+                document.getElementById('create-topic-btn').disabled = false;
+            }
+        }
+
+        // Mostrar el diálogo para crear un topic
+        function showCreateTopicDialog() {
+            // Preparar un memo por defecto que sea útil
+            const today = new Date().toISOString().split('T')[0];
+            document.getElementById('topic-memo').value = "AgroConsultas-" + today;
+            
+            // Mostrar el modal
+            document.getElementById('create-topic-modal').style.display = 'block';
+            
+            // Enfocar el input para que el usuario pueda escribir inmediatamente
+            document.getElementById('topic-memo').focus();
+            
+            // Permitir crear con Enter
+            document.getElementById('topic-memo').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    createNewTopicWithMemo();
+                }
+            });
+        }
+        
+        // Ocultar el diálogo para crear un topic
+        function hideCreateTopicDialog() {
+            document.getElementById('create-topic-modal').style.display = 'none';
+        }
+        
+        // Crear un nuevo topic con el memo proporcionado
+        async function createNewTopicWithMemo() {
+            // Obtener el memo ingresado
+            const memo = document.getElementById('topic-memo').value.trim();
+            
+            if (!memo) {
+                alert("Por favor, ingresa una descripción para el topic");
+                return;
+            }
+            
+            // Ocultar el modal
+            hideCreateTopicDialog();
+            
+            // Deshabilitar botones mientras se procesa
+            document.getElementById('set-topic-btn').disabled = true;
+            document.getElementById('create-topic-btn').disabled = true;
+            document.getElementById('create-topic-btn').textContent = 'Creando...';
+
+            try {
+                const response = await fetch('/api/create-topic', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        memo: memo,
+                        accountId: userAccountId,
+                        privateKey: userPrivateKey
+                    })
+                });
+
+                const data = await response.json();
+                if (data.success) {
+                    currentTopicId = data.topicId;
+                    completeTopicSetup(`✅ Nuevo Topic creado con ID: ${currentTopicId}. ¡Guarda este ID para futuras sesiones!`);
+                    
+                    // Actualizar la lista de topics
+                    fetchUserTopics();
+                } else {
+                    alert(`Error al crear el Topic: ${data.error}`);
+                    // Reactivar botones
+                    document.getElementById('set-topic-btn').disabled = false;
+                    document.getElementById('create-topic-btn').disabled = false;
+                    document.getElementById('create-topic-btn').textContent = 'Crear nuevo Topic';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Lo siento, ocurrió un error al crear el Topic.');
+                // Reactivar botones
+                document.getElementById('set-topic-btn').disabled = false;
+                document.getElementById('create-topic-btn').disabled = false;
+                document.getElementById('create-topic-btn').textContent = 'Crear nuevo Topic';
+            }
+        }
+        
+        // Función para completar la configuración del topic y mostrar el chat
+        function completeTopicSetup(message) {
+            // Actualizar los pasos en la UI
+            document.getElementById('step-2').classList.remove('active');
+            document.getElementById('step-2').classList.add('completed');
+            document.getElementById('step-3').classList.add('active');
+            
+            // Ocultar selector de topic y mostrar chat y registros
+            document.getElementById('topic-container').style.display = 'none';
+            document.getElementById('chat-container').style.display = 'block';
+            document.getElementById('records-container-outer').style.display = 'block';
+            
+            // Mensaje inicial con instrucciones específicas para crear registros
+            addMessage(`¡Hola! Soy tu asistente agrícola con tecnología Web3.0. 
+
+Para crear registros agrícolas en la blockchain, escribe comandos que incluyan la palabra "registrar" o "crear registro" seguido de la información relevante como:
+- Finca (nombre de tu finca)
+- Lote o parcela
+- Variedad de cultivo
+- Proceso realizado (siembra, cosecha, fertilización, etc.)
+- Fecha y hora (si aplica)
+
+Por ejemplo:
+"Registrar que hoy sembré café variedad Colombia en el lote Norte de la Finca El Paraíso"
+"Crear registro de cosecha de 50 kg de café caturra del lote 3 de Finca Montañas Verdes realizada ayer"
+
+También puedes preguntarme sobre cultivos, técnicas agrícolas o cualquier consulta relacionada con la agricultura. Escribe "ayuda" para ver todos los comandos disponibles.`, 'bot-message');
+            
+            // Mensaje sobre el topic configurado
+            addMessage(message, 'bot-message');
+        }
+
+        // Función para enviar una consulta
+        async function submitQuery() {
+            const queryInput = document.getElementById('query-input');
+            const query = queryInput.value.trim();
+
+            if (!query) return;
+
+            // Mostrar mensaje del usuario
+            addMessage(query, 'user-message');
+            queryInput.value = '';
+
+            // Mostrar mensaje de "pensando..."
+            const thinkingId = 'thinking-' + Date.now();
+            addMessage('Pensando...', 'bot-message thinking', thinkingId);
+
+            try {
+                const response = await fetch('/api/query', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        query,
+                        accountId: userAccountId,
+                        privateKey: userPrivateKey
+                    })
+                });
+
+                // Eliminar mensaje de "pensando..."
+                document.getElementById(thinkingId)?.remove();
+
+                const data = await response.json();
+
+                if (data.error) {
+                    // Manejar errores de la API
+                    addMessage(`⚠️ ${data.error}`, 'bot-message');
+                    return;
+                }
+
+                // Definir la clase del mensaje
+                let messageClass = 'bot-message';
+                let messageText = data.answer;
+
+                // Si es un mensaje de ayuda, aplicar formato especial
+                if (data.isHelp) {
+                    messageClass += ' help-message markdown';
+                }
+
+                // Si se almacenó en blockchain, indicarlo
+                if (data.storedInBlockchain) {
+                    messageClass += ' blockchain-message';
+                    messageText += '\n\n✅ Esta información ha sido registrada en Hedera para asegurar su trazabilidad.';
+                }
+
+                // Mostrar la respuesta
+                addMessage(messageText, messageClass);
+
+                // Si es un mensaje markdown, aplicar formateado
+                if (data.isHelp) {
+                    applyMarkdownFormatting();
+                }
+            } catch (error) {
+                // Eliminar mensaje de "pensando..."
+                document.getElementById(thinkingId)?.remove();
+
+                console.error('Error:', error);
+                addMessage('Lo siento, ocurrió un error al procesar tu consulta. Por favor intenta de nuevo más tarde.', 'bot-message');
+            }
+        }
+
+        // Aplicar formato markdown simple
+        function applyMarkdownFormatting() {
+            const markdownElements = document.querySelectorAll('.markdown');
+            markdownElements.forEach(element => {
+                let html = element.textContent;
+
+                // Convertir # a <h1>, ## a <h2>, etc.
+                html = html.replace(/^# (.+)$/gm, '<h1>$1</h1>');
+                html = html.replace(/^## (.+)$/gm, '<h2>$1</h2>');
+                html = html.replace(/^### (.+)$/gm, '<h3>$1</h3>');
+
+                // Convertir - a <li>
+                html = html.replace(/^- (.+)$/gm, '<li>$1</li>');
+
+                // Agrupar <li> en <ul>
+                html = html.replace(/(<li>.+<\/li>\n)+/g, match => `<ul>${match}</ul>`);
+
+                // Convertir líneas en blanco a <p>
+                html = html.replace(/^(?!<[h|u|l|p]).+$/gm, '<p>$&</p>');
+
+                // Manejar código
+                html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+                element.innerHTML = html;
+            });
+        }
+
+        // Función para agregar un mensaje al chat
+        function addMessage(text, className, id = null) {
+            const messagesContainer = document.getElementById('messages-container');
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${className}`;
+            if (id) messageElement.id = id;
+            messageElement.textContent = text;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+
+        // Función para cargar registros de la blockchain
+        async function loadRecords() {
+            if (!currentTopicId) {
+                alert('Primero debes configurar un Topic ID para poder cargar registros.');
+                return;
+            }
+
+            const recordsContainer = document.getElementById('records-container');
+            recordsContainer.innerHTML = '<p>Cargando registros...</p>';
+            
+            // Deshabilitar botón mientras se cargan los registros
+            const loadBtn = document.getElementById('load-records-btn');
+            loadBtn.disabled = true;
+            loadBtn.textContent = 'Cargando...';
+
+            try {
+                const response = await fetch('/api/records', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        topicId: currentTopicId,
+                        accountId: userAccountId,
+                        privateKey: userPrivateKey
+                    })
+                });
+                
+                const records = await response.json();
+                
+                // Reactivar el botón
+                loadBtn.disabled = false;
+                loadBtn.textContent = 'Cargar Registros';
+
+                if (records.error) {
+                    recordsContainer.innerHTML = `<p>Error: ${records.error}</p>`;
+                    return;
+                }
+
+                if (records.length === 0) {
+                    recordsContainer.innerHTML = '<p>No hay registros disponibles todavía en este Topic.</p>';
+                    return;
+                }
+
+                recordsContainer.innerHTML = '';
+                records.forEach(record => {
+                    try {
+                        // Intentar parsear el contenido JSON
+                        const data = JSON.parse(record.contents);
+                        const recordElement = document.createElement('div');
+                        recordElement.className = 'record';
+
+                        // Diferentes formatos según el tipo de registro
+                        if (data.record) {
+                            // Es un registro formateado
+                            const r = data.record;
+                            recordElement.innerHTML = `
+                                <p><strong>Fecha:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                                <p><strong>Tipo de actividad:</strong> ${r.activityType}</p>
+                                <p><strong>Descripción:</strong> ${r.description}</p>
+                                <p><strong>Cultivos:</strong> ${r.crops}</p>
+                                ${r.location ? `<p><strong>Ubicación:</strong> ${r.location}</p>` : ''}
+                                ${r.notes ? `<p><strong>Notas:</strong> ${r.notes}</p>` : ''}
+                                <p><strong>Consenso Hedera:</strong> ${record.timestamp}</p>
+                            `;
+                        } else {
+                            // Es un registro de consulta
+                            recordElement.innerHTML = `
+                                <p><strong>Fecha:</strong> ${new Date(data.timestamp).toLocaleString()}</p>
+                                <p><strong>Consulta:</strong> ${data.query || ''}</p>
+                                <p><strong>Tipo:</strong> ${data.type || 'Desconocido'}</p>
+                                <p><strong>Consenso Hedera:</strong> ${record.timestamp}</p>
+                            `;
+                        }
+                        recordsContainer.appendChild(recordElement);
+                    } catch (e) {
+                        console.error('Error al parsear registro:', e);
+                        // Mostrar registro en formato crudo si hay error al parsear
+                        const recordElement = document.createElement('div');
+                        recordElement.className = 'record';
+                        recordElement.innerHTML = `
+                            <p><strong>Timestamp:</strong> ${record.timestamp}</p>
+                            <p><strong>Contenido:</strong> ${record.contents}</p>
+                            <p><strong>Nota:</strong> No se pudo parsear el formato del registro</p>
+                        `;
+                        recordsContainer.appendChild(recordElement);
+                    }
+                });
+            } catch (error) {
+                console.error('Error al cargar registros:', error);
+                recordsContainer.innerHTML = '<p>Error al cargar los registros.</p>';
+                
+                // Reactivar el botón
+                loadBtn.disabled = false;
+                loadBtn.textContent = 'Cargar Registros';
+            }
+        }
+
+        // Permitir enviar con Enter
+        document.getElementById('query-input').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                submitQuery();
+            }
+        });
+        
+        // También permitir Enter en los inputs de las credenciales
+        document.getElementById('private-key').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                connectWallet();
+            }
+        });
+    </script>
+</body>
+
+</html>
